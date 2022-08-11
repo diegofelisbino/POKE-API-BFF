@@ -4,6 +4,7 @@ using Pokedex.Api.Configurations;
 using Pokedex.Application.AutoMapper;
 using Pokedex.Application.Contracts;
 using Pokedex.Application.Interfaces;
+using Pokedex.Application.Notificacoes;
 using Pokedex.Application.Services;
 using Refit;
 
@@ -27,6 +28,7 @@ namespace Pokedex.Test
 
             services.AddAutoMapper(typeof(ApplicationConfigurationMapping));
             services.AddScoped<ApplicationConfigurationMapping>();
+            services.AddScoped<INotificador, Notificador>();
 
             return services;
 

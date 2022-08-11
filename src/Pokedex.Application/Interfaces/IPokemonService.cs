@@ -12,8 +12,8 @@ namespace Pokedex.Application.Interfaces
         Task<PokemonListPaginadoViewModel> ObterPokemonsPaginado(int offset, int limit);
         Task<PokemonListViewModel> ObterTodosPokemons();*/
 
-        Task<ApiResponse<PokemonDetailModel>> ObterPokemonPorId(long id);
-        Task<ApiResponse<PokemonListModel>> ObterTodosPokemons();
+        Task<PokemonDetailModel> ObterPokemonPorId(long id);
+        Task<PokemonListModel> ObterTodosPokemons();
 
         /*Task<PokemonListPaginadoModel> ObterPokemonsPaginado(int offset, int limit);
         Task<PokemonDetailModel> ObterPokemonPorNome(string nome);*/

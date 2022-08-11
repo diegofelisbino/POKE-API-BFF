@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Pokedex.Api.Configurations;
 using System.Net;
 

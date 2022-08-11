@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pokedex.Api.Configurations;
 using Pokedex.Api.ViewModels;
@@ -7,39 +8,39 @@ using System.Net;
 
 namespace Pokedex.Api.Controllers.v1
 {
+    [Authorize]
     [Route(ApiConfig.MINHA_ROTA_BASE_V1)]    
     public class PokemonController : MainController
     {
         private readonly IPokemonService _service;
         private readonly IMapper _mapper;
-        public PokemonController(IPokemonService service, IMapper mapper)
+          
+        public PokemonController(IPokemonService service, IMapper mapper, INotificador notificador ): base (notificador)
         {
             _service = service;
             _mapper = mapper;   
         }
 
+        [AllowAnonymous]
         [HttpGet("{id:long}")]
         public async Task<ActionResult<PokemonDetailViewModel>> ObterPokemonPorId(long id)
         {            
-            var responseApi = await _service.ObterPokemonPorId(id);
-            
-            if (!responseApi.IsSuccessStatusCode) return BadRequest($"Falha ao buscar Pokemon no repositório ({responseApi.StatusCode})");
+            var response = await _service.ObterPokemonPorId(id);
 
-            var pokemon = _mapper.Map<PokemonDetailViewModel>(responseApi.Content);
+            var pokemonViewModel = _mapper.Map<PokemonDetailViewModel>(response);
             
-            return Ok(pokemon);
+            return CustomResponse(pokemonViewModel);
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<PokemonListViewModel>> ObterTodosPokemons()
         {
             var responseApi = await _service.ObterTodosPokemons();
-
-            if (!responseApi.IsSuccessStatusCode) return BadRequest($"Falha ao buscar Pokemon no repositório ({responseApi.StatusCode})");
-
-            var pokemons = _mapper.Map<PokemonListViewModel>(responseApi.Content); 
             
-            return Ok(pokemons);
+            var pokemons = _mapper.Map<PokemonListViewModel>(responseApi); 
+            
+            return CustomResponse(pokemons);
         }
 
 

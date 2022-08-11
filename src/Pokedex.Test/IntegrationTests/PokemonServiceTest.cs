@@ -19,9 +19,7 @@ namespace Pokedex.Test.IntegrationTests
 
             var provider = services.BuildServiceProvider();
             _pokemonService = provider.GetService<IPokemonService>();
-        }
-
-        
+        }        
 
         [Theory]
         [InlineData(25)]
@@ -36,7 +34,7 @@ namespace Pokedex.Test.IntegrationTests
             var pokemonObtido = await _pokemonService.ObterPokemonPorId(idPokemon);
 
             //Assert
-            pokemonObtido.Content.Should().BeEquivalentTo(pokemonEsperado);
+            pokemonObtido.Should().BeEquivalentTo(pokemonEsperado);
            
         }
 
@@ -55,7 +53,7 @@ namespace Pokedex.Test.IntegrationTests
             //Act
             var pokemonList = await _pokemonService.ObterTodosPokemons();
 
-            int obtido = pokemonList.Content.Pokemons.Take(quantidade).Count();
+            int obtido = pokemonList.Pokemons.Take(quantidade).Count();
 
             //Assert
             Assert.Equal(esperado, obtido);

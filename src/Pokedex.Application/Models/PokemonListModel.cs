@@ -15,7 +15,7 @@ namespace Pokedex.Application.Models
             {
                 _pokemons = new List<PokemonBaseModel>();
 
-                if (this.Results.Count >= 1)
+                if (this.Results != null && this.Results.Count >= 1)
                 {
                     foreach (var result in this.Results)
                     {

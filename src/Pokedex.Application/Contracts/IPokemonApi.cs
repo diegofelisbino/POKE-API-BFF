@@ -13,10 +13,10 @@ namespace Pokedex.Application.Contracts
         Task<ApiResponse<PokeList>> ObterTodosPokemons();
 
 
-        [Get("/pokemon/?offset={offSet}&limit={limit}")]
+        /*[Get("/pokemon/?offset={offSet}&limit={limit}")]
         Task<PokeList> ObterPokemonsPaginado(int offSet, int limit);
 
         [Get("/pokemon/{nome}")]
-        Task<Pokemon> ObterPokemonPorNome(string nome);        
+        Task<Pokemon> ObterPokemonPorNome(string nome);        */
     }
 }

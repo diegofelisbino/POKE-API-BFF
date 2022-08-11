@@ -1,100 +1,175 @@
-
+﻿
 using AutoMapper;
 using FluentAssertions;
 using Moq;
 using Pokedex.Application.Contracts;
 using Pokedex.Application.Contracts.v1.Responses;
+using Pokedex.Application.Interfaces;
 using Pokedex.Application.Models;
+using Pokedex.Application.Notificacoes;
 using Pokedex.Application.Services;
 using Pokedex.Test.Mocks;
 using Refit;
-using System.Linq;
 using System.Net;
 
 namespace Pokedex.Test.UnitTests.PokemonServiceTest;
 
-public class ObterPokemonPorIdTest
+public class PokemonServiceTest
 {
     private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<IPokemonApi> _pokemonApi;
+    private readonly Mock<INotificador> _notificador;
     private PokemonService _pokemonService;
 
-    public ObterPokemonPorIdTest()
+    const string MSG_FALHA_COMUNICACAO = "Falhaa na comunicação com a Api Principal";
+
+    public PokemonServiceTest()
     {
         _mockMapper = new Mock<IMapper>();
-
         _pokemonApi = new Mock<IPokemonApi>();
+        _notificador = new Mock<INotificador>();
 
-        _pokemonService = new PokemonService(_pokemonApi.Object, _mockMapper.Object);
+        _pokemonService = new PokemonService(_pokemonApi.Object, _mockMapper.Object, _notificador.Object);
     }
 
     [Fact]
-    public async Task Quando_Response_Sucesso_Deve_Retornar_PokemonDetailModel()
+    public async Task ObterPokemonPorId_Quando_Response_Sucesso()
     {
         //Arrange
-        var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
-        var apiResponse = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.OK), pokemonResponseMock, null, null);
+        var pokemonMock = PokemonResponseMock.ObterPikachuResponseMock();
 
-        var pokemonDetailMock = PokemonDetailModelMock.ObterPikachuModelMock();
+        var resultadoEsperado = PokemonDetailModelMock.ObterPikachuModelMock();
 
-        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(apiResponse);
-        _mockMapper.Setup(x => x.Map<PokemonDetailModel>(pokemonResponseMock)).Returns(pokemonDetailMock);
+        var response = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.OK), pokemonMock, null);
+
+        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(response);
+        _mockMapper.Setup(x => x.Map<PokemonDetailModel>(response.Content)).Returns(resultadoEsperado);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _notificador.Setup(x => x.Notificar(It.IsAny<Notificacao>()));
+            resultadoEsperado = new PokemonDetailModel();
+        }
 
         //Act            
-        var valorObtido = await _pokemonService.ObterPokemonPorId(25);
+        var resultadoObtido = await _pokemonService.ObterPokemonPorId(25);
 
         //Assert
-        Assert.NotNull(valorObtido);
+        resultadoObtido.Should().NotBeNull();
+        resultadoObtido.Should().BeEquivalentTo(resultadoEsperado);
     }
 
+
     [Fact]
-    public async Task Quando_Reseponse_404_Deve_Retornar_404()
+    public async Task ObterPokemonPorId_Quando_Response_Not_Success()
     {
-        //Arrange            
-        var apiResponse = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.NotFound), null, null);
-        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(apiResponse);
+        //Arrange        
+        
+        var responseMock = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.BadRequest), null, null);
 
-        //Act                       
-        //var exceptionObtida = await Assert.ThrowsAnyAsync<Exception>(() => _pokemonService.ObterPokemonPorId(25));
-        var valorObtido = await _pokemonService.ObterPokemonPorId(25);
+        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(responseMock);
+
+
+        //Act                
+        var pokemonObtido = await _pokemonService.ObterPokemonPorId(25);
+
+        var notificador = new Notificador();
+        notificador.Notificar(new Notificacao(MSG_FALHA_COMUNICACAO));
+        bool temNotificacao = notificador.TemNotificacao();
+        var notificadoesObtidas = notificador.ObterNotificacoes().First();
 
         //Assert
-        Assert.Equal(HttpStatusCode.NotFound, valorObtido.StatusCode);
-
+        pokemonObtido.Should().BeEquivalentTo(new PokemonDetailModel());
+        temNotificacao.Should().BeTrue();        
+        notificadoesObtidas.Should().BeEquivalentTo(new Notificacao(MSG_FALHA_COMUNICACAO));
+        notificadoesObtidas.Mensagem.Should().Be(MSG_FALHA_COMUNICACAO);
+        notificadoesObtidas.Mensagem.Should().NotBeEmpty();
+        notificadoesObtidas.Mensagem.Should().NotBeNullOrWhiteSpace();
+        notificadoesObtidas.Mensagem.Should().NotBe("");
     }
 
     [Fact]
-    public async Task Quando_Reseponse_500_Deve_Retornar_500()
+    public async Task ObterPokemonPorId_Quando_Response_Not_Success_()
+    {
+        //Arrange        
+
+        var responseMock = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.BadRequest), null, null);
+
+        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(responseMock);
+
+
+        //Act                
+        var pokemonObtido = await _pokemonService.ObterPokemonPorId(25);
+
+        var notificador = new Notificador();
+        notificador.Notificar(new Notificacao(""));
+        bool temNotificacao = notificador.TemNotificacao();
+        var notificadoesObtidas = notificador.ObterNotificacoes().First();
+
+        //Assert
+        pokemonObtido.Should().BeEquivalentTo(new PokemonDetailModel());
+        temNotificacao.Should().BeTrue();        
+        notificadoesObtidas.Mensagem.Should().Be("");
+    }
+
+    [Fact]
+    public async Task ObterTodosPokemons_Quando_Response_Sucesso()
     {
         //Arrange
-        long idPokemon = 25;
-        var apiResponse = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.InternalServerError), null, null, null);
-        _pokemonApi.Setup(x => x.ObterPokemonPorId(idPokemon).Result).Returns(apiResponse);
+        var pokeListMock = PokemonResponseMock.ObterTodosPokemonsResponse(10);
+
+        var pokeListModelMock = PokemonListModelMock.ConverterPokeListEmPokeListModel(pokeListMock);
+
+        var response = new ApiResponse<PokeList>(new HttpResponseMessage(HttpStatusCode.OK), pokeListMock, null);
+
+        _pokemonApi.Setup(x => x.ObterTodosPokemons().Result).Returns(response);
+        _mockMapper.Setup(x => x.Map<PokemonListModel>(response.Content)).Returns(pokeListModelMock);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _notificador.Setup(x => x.Notificar(It.IsAny<Notificacao>()));
+        }
 
         //Act
-        var valorObtido = await _pokemonService.ObterPokemonPorId(idPokemon);
+        var resultadoObtido = await _pokemonService.ObterTodosPokemons();
 
         //Assert
-        Assert.Equal(HttpStatusCode.InternalServerError, valorObtido.StatusCode);
-    }
+        resultadoObtido.Should().NotBeNull();
 
-    [Theory]
-    [InlineData(25)]
-    public async Task Quando_Response_Insuccess_Nao_Receber_404_Ou_500_Entao_Deve_Retornar_404(long idPokemon)
-    {
-        //Arrange     
-        var apiResponse = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.Forbidden), null, null);
-        _pokemonApi.Setup(x => x.ObterPokemonPorId(idPokemon).Result).Returns(apiResponse);
 
-        //Act
-        var valorObtido = await _pokemonService.ObterPokemonPorId(idPokemon);
-
-        //Assert
-        Assert.Equal(HttpStatusCode.NotFound, valorObtido.StatusCode);
     }
 
     [Fact]
-    public async Task Quando_Stats_Nao_Retornar_Elementos_Entao_NiveisDePoder_Nao_Deve_Retornar_Elementos()
+    public async Task ObterTodosPokemon_Quando_Response_Not_Success()
+    {
+        //Arrange                
+        var responseMock = new ApiResponse<PokeList>(new HttpResponseMessage(HttpStatusCode.BadRequest), null, null);
+
+        _pokemonApi.Setup(x => x.ObterTodosPokemons().Result).Returns(responseMock);
+
+        
+
+        //Act                
+        var pokemonObtido = await _pokemonService.ObterTodosPokemons();
+
+        var notificador = new Notificador();
+        notificador.Notificar(new Notificacao(MSG_FALHA_COMUNICACAO));
+        bool temNotificacao = notificador.TemNotificacao();
+        var notificadoesObtidas = notificador.ObterNotificacoes().First();
+
+        //Assert
+        pokemonObtido.Should().BeEquivalentTo(new PokemonListModel());
+        temNotificacao.Should().BeTrue();
+        notificadoesObtidas.Should().BeEquivalentTo(new Notificacao(MSG_FALHA_COMUNICACAO));
+        notificadoesObtidas.Mensagem.Should().Be(MSG_FALHA_COMUNICACAO);
+        notificadoesObtidas.Mensagem.Should().NotBeEmpty();
+        notificadoesObtidas.Mensagem.Should().NotBeNullOrWhiteSpace();
+        notificadoesObtidas.Mensagem.Should().NotBe("");
+    }
+
+
+    [Fact]
+    public async Task ObterPokemonPorId_Quando_Stats_Nao_Retornar_Elementos_Entao_NiveisDePoder_Nao_Deve_Retornar_Elementos()
     {
         //Arrange
         var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
@@ -116,7 +191,7 @@ public class ObterPokemonPorIdTest
         //Act                       
         var pokemonDetail = await _pokemonService.ObterPokemonPorId(25);
 
-        int resultadoObtido = pokemonDetail.Content.NiveisDePoder.Count;
+        int resultadoObtido = pokemonDetail.NiveisDePoder.Count;
         int resultadoEsperado = 0;
 
         //Assert         
@@ -124,7 +199,7 @@ public class ObterPokemonPorIdTest
     }
 
     [Fact]
-    public async Task Quando_Stats_Retornar_Elementos_Entao_NiveisDePoder_Deve_Retornar_Elementos()
+    public async Task ObterPokemonPorId_Quando_Stats_Retornar_Elementos_Entao_NiveisDePoder_Deve_Retornar_Elementos()
     {
         //Arrange
         var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
@@ -143,7 +218,7 @@ public class ObterPokemonPorIdTest
 
         //Act                       
         var pokemonDetail = await _pokemonService.ObterPokemonPorId(25);
-        int resultadoObtido = pokemonDetail.Content.NiveisDePoder.Count;
+        int resultadoObtido = pokemonDetail.NiveisDePoder.Count;
         int resultadoEsperado = 7;
 
         //Assert         
@@ -151,7 +226,7 @@ public class ObterPokemonPorIdTest
     }
 
     [Fact]
-    public async Task Quando_Stats_Retornar_1_Elemento_Entao_NiveisDePoder_Deve_Retornar_2_Elementos()
+    public async Task ObterPokemonPorId_Quando_Stats_Retornar_1_Elemento_Entao_NiveisDePoder_Deve_Retornar_2_Elementos()
     {
         //Arrange
         var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
@@ -174,7 +249,7 @@ public class ObterPokemonPorIdTest
 
         //Act                       
         var pokemonDetail = await _pokemonService.ObterPokemonPorId(25);
-        int resultadoObtido = pokemonDetail.Content.NiveisDePoder.Count;
+        int resultadoObtido = pokemonDetail.NiveisDePoder.Count;
         int resultadoEsperado = 1;
 
         //Assert         
@@ -182,7 +257,7 @@ public class ObterPokemonPorIdTest
     }
 
     [Fact]
-    public void Quando_RecuperarNiveisDePoderPorStats_Nao_Retornar_Elementos_Entao_Deve_Retornar_Null()
+    public void ObterPokemonPorId_Quando_RecuperarNiveisDePoderPorStats_Nao_Retornar_Elementos_Entao_Deve_Retornar_Null()
     {
         //Arrange
         var listaStatsVazia = new List<StatX>();
@@ -196,7 +271,7 @@ public class ObterPokemonPorIdTest
     }
 
     [Fact]
-    public void Quando_RecuperarNiveisDePoderPorStats_Nao_Receber_Elementos_Entao_Resultado_Deve_Conter_MaxStat()
+    public void ObterPokemonPorId_Quando_RecuperarNiveisDePoderPorStats_Nao_Receber_Elementos_Entao_Resultado_Deve_Conter_MaxStat()
     {
         //Arrange
         var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
@@ -214,7 +289,7 @@ public class ObterPokemonPorIdTest
     }
 
     [Fact]
-    public void Quando_RecuperarNiveisDePoderPorStats_Receber_1_Elemento_Entao_Resultado_Nao_Deve_Retornar_MaxStat()
+    public void ObterPokemonPorId_Quando_RecuperarNiveisDePoderPorStats_Receber_1_Elemento_Entao_Resultado_Nao_Deve_Retornar_MaxStat()
     {
         //Arrange
         var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
@@ -232,7 +307,7 @@ public class ObterPokemonPorIdTest
     }
 
     [Fact]
-    public void Quando_Possuir_MaxBaseStat_Entao_Deve_Atribuir_Maior_Valor_Stats()
+    public void ObterPokemonPorId_Quando_Possuir_MaxBaseStat_Entao_Deve_Atribuir_Maior_Valor_Stats()
     {
         //Arrange
         var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
@@ -248,91 +323,10 @@ public class ObterPokemonPorIdTest
         //Assert
         Assert.Equal(resultadoEsperado, resultadoObtido);
     }
-}
 
-public class ObterTodosPokemons
-{
-    private readonly Mock<IMapper> _mockMapper;
-    private readonly Mock<IPokemonApi> _pokemonApi;
-    private PokemonService _pokemonService;
-    public ObterTodosPokemons()
-    {
-        _mockMapper = new Mock<IMapper>();
-
-        _pokemonApi = new Mock<IPokemonApi>();
-
-        _pokemonService = new PokemonService(_pokemonApi.Object, _mockMapper.Object);
-    }
-
-    #region ObterTodosPokemons  
 
     [Fact]
-    public async Task Quando_Response_Sucesso_Entao_Deve_Retornar_PokemonListModel()
-    {
-        //Arrange
-        var pokeListMock = PokemonResponseMock.ObterTodosPokemonsResponse(10);
-
-        var response = new ApiResponse<PokeList>(new HttpResponseMessage(HttpStatusCode.OK), pokeListMock, null);
-
-        var pokeListModelMock = PokemonListModelMock.ConverterPokeListEmPokeListModel(pokeListMock);
-
-        _pokemonApi.Setup(x => x.ObterTodosPokemons().Result).Returns(response);
-
-        _mockMapper.Setup(x => x.Map<PokemonListModel>(response.Content)).Returns(pokeListModelMock);
-
-        //Act
-        var resultadoObtido = await _pokemonService.ObterTodosPokemons();
-
-        //Assert
-        Assert.NotNull(resultadoObtido.Content.Pokemons);
-
-    }
-
-    [Fact]
-    public async Task Quando_Response_404_Entao_Deve_Retornar_404()
-    {
-        //Arrange
-        var response = new ApiResponse<PokeList>(new HttpResponseMessage(HttpStatusCode.NotFound), null, null);
-        _pokemonApi.Setup(x => x.ObterTodosPokemons().Result).Returns(response);
-
-        //Act
-        var valorObtido = await _pokemonService.ObterTodosPokemons();
-
-        //Assert
-        Assert.Equal(HttpStatusCode.NotFound, valorObtido.StatusCode);
-    }
-
-    [Fact]
-    public async Task Quando_Response_500_Entao_Deve_Retornar_500()
-    {
-        //Arrange            
-        var response = new ApiResponse<PokeList>(new HttpResponseMessage(HttpStatusCode.InternalServerError), null, null);
-
-        _pokemonApi.Setup(x => x.ObterTodosPokemons().Result).Returns(response);
-
-        //Act
-        var valorObtido = await _pokemonService.ObterTodosPokemons();
-
-        //Assert
-        Assert.Equal(HttpStatusCode.InternalServerError, valorObtido.StatusCode);
-    }
-
-    [Fact]
-    public async Task Quando_Reseponse_Insuccess_Nao_Receber_404_Ou_500_Entao_Deve_Retornar_404()
-    {
-        //Arrange
-        var response = new ApiResponse<PokeList>(new HttpResponseMessage(HttpStatusCode.Forbidden), null, null);
-        _pokemonApi.Setup(x => x.ObterTodosPokemons().Result).Returns(response);
-
-        //Act
-        var valorObtido = await _pokemonService.ObterTodosPokemons();
-
-        //Assert
-        Assert.Equal(HttpStatusCode.NotFound, valorObtido.StatusCode);
-    }
-
-    [Fact]
-    public void Quando_Results_Receber_1_Elemento_Entao_Pokemons_Deve_Implementar_1_Elemento()
+    public void ObterTodosPokemons_Quando_Results_Receber_1_Elemento_Entao_Pokemons_Deve_Implementar_1_Elemento()
     {
         //Arrange
         var resultMock = new Results { Name = "bulbasaur", Url = new Uri("https://pokeapi.co/api/v2/pokemon/1/") };
@@ -358,7 +352,7 @@ public class ObterTodosPokemons
     }
 
     [Fact]
-    public void Quando_Nao_Receber_Results_Entao_Pokemons_Nao_Deve_Implementar_List()
+    public void ObterTodosPokemons_Quando_Nao_Receber_Results_Entao_Pokemons_Nao_Deve_Implementar_List()
     {
         //Arrange        
         var resultsMock = new List<Results>();
@@ -382,6 +376,5 @@ public class ObterTodosPokemons
         valorEsperado.Should().Be(valorObtido);
     }
 
-    #endregion
 }
 
