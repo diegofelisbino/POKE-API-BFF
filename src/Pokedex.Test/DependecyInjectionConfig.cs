@@ -20,7 +20,7 @@ namespace Pokedex.Test
 
             services.AddRefitClient<IPokemonApi>().ConfigureHttpClient(c =>
             {
-                c.BaseAddress = new Uri(ApiConfig.BASE_ADRESS_EXTERNAL_API);
+                c.BaseAddress = new Uri("https://pokeapi.co/api/v2");
             });
 
             services.AddAutoMapper(typeof(ApiConfigurationMapping));

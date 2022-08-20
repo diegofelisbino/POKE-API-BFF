@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Pokedex.Application.Interfaces;
 using Pokedex.Application.Notificacoes;
 
-namespace Pokedex.Api.Controllers.v1
+namespace Pokedex.Api.Controllers
 {
     [ApiController]
     public abstract class MainController : ControllerBase
@@ -35,7 +35,7 @@ namespace Pokedex.Api.Controllers.v1
                 success = false,
                 errors = _notificador.ObterNotificacoes()
             });
-        }      
+        }
 
 
     }

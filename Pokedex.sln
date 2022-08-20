@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pokedex.Api", "src\Pokedex.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pokedex.Test", "src\Pokedex.Test\Pokedex.Test.csproj", "{EBC4BE76-0CA4-46C2-8C47-AD34D026DFCE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pokedex.Application", "src\Pokedex.Application\Pokedex.Application.csproj", "{EC52FF47-D243-4FE7-8BCA-B4D6A0D7F58C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pokedex.Domain", "src\Pokedex.Application\Pokedex.Domain.csproj", "{EC52FF47-D243-4FE7-8BCA-B4D6A0D7F58C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

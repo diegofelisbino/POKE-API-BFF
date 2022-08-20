@@ -6,11 +6,11 @@ namespace Pokedex.Test.IntegrationTests
     public class PokemonControllerTest : IClassFixture<WebApplicationFactory<Program>>
     {
         private readonly WebApplicationFactory<Program> _factory;
-        private string _url = $"{Api.Configurations.ApiConfig.MEU_ENDERECO_BASE}{Api.Configurations.ApiConfig.MINHA_ROTA_BASE_V1}";
+        private string _url = "https://localhost:5001/api/v1/pokemon/";
 
         public PokemonControllerTest(WebApplicationFactory<Program> factory)
         {
-            _factory = factory;
+            _factory = factory;          
         }
 
         [Theory]

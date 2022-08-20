@@ -1,32 +1,30 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.Extensions.Configuration;
 using Pokedex.Api.Configurations;
-using System.Net;
+using System.Web.Http;
+using System.Web.Http.Dispatcher;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Configuracoes da Injecao de Dependencia
+//builder.Services.AddEndpointsApiExplorer();
+
+
+ApiConfig.AddApiConfig(builder.Services);
+
+SwaggerConfig.AddSwaggerConfig(builder.Services);
+
 DependecyInjectionConfig.ResolveDependencies(builder.Services);
 
-// Add services to the container.
-builder.Services.AddControllers();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
-app.UseHttpsRedirection();
+var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
+SwaggerConfig.UseSwaggerConfig(app, apiVersionDescriptionProvider);
 
-app.UseAuthorization();
+ApiConfig.UseApiConfig(app, app.Configuration);
 
 app.MapControllers();
 

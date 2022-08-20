@@ -1,6 +1,7 @@
 ﻿
 
 
+using Microsoft.Extensions.Options;
 using Pokedex.Api.AutoMapper;
 using Pokedex.Application.AutoMapper;
 using Pokedex.Application.Contracts;
@@ -8,6 +9,7 @@ using Pokedex.Application.Interfaces;
 using Pokedex.Application.Notificacoes;
 using Pokedex.Application.Services;
 using Refit;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Pokedex.Api.Configurations
 {
@@ -19,7 +21,7 @@ namespace Pokedex.Api.Configurations
 
             services.AddRefitClient<IPokemonApi>().ConfigureHttpClient(c =>
             {
-                c.BaseAddress = new Uri(ApiConfig.BASE_ADRESS_EXTERNAL_API);
+                c.BaseAddress = new Uri("https://pokeapi.co/api/v2");
             });
          
             services.AddAutoMapper(typeof(ApiConfigurationMapping));
@@ -29,6 +31,8 @@ namespace Pokedex.Api.Configurations
             services.AddScoped<ApplicationConfigurationMapping>();
 
             services.AddScoped<INotificador, Notificador>();
+
+            services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 
             return services;
         }
