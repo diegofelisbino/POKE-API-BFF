@@ -8,7 +8,7 @@ namespace Pokedex.Api.Controllers
     [ApiController]
     public abstract class MainController : ControllerBase
     {
-        private readonly INotificador _notificador;
+        private readonly INotificador _notificador;        
 
         public MainController(INotificador notificador)
         {
@@ -22,7 +22,7 @@ namespace Pokedex.Api.Controllers
         protected ActionResult CustomResponse(object result = null)
         {
             if (OperacaoValida())
-            {
+            {   
                 return Ok(new
                 {
                     success = true,

@@ -1,14 +1,11 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.Extensions.Configuration;
 using Pokedex.Api.Configurations;
-using System.Web.Http;
-using System.Web.Http.Dispatcher;
+using Pokedex.Api.Extensions;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-//builder.Services.AddEndpointsApiExplorer();
-
+LoggerConfig.AddLoggingConfiguration (builder.Services, builder.Host, builder.Configuration);
 
 ApiConfig.AddApiConfig(builder.Services);
 
@@ -19,6 +16,10 @@ DependecyInjectionConfig.ResolveDependencies(builder.Services);
 
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionMiddleware>();
+
+LoggerConfig.UseLoggingConfiguration(app);
 
 var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 

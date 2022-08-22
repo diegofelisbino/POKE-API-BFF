@@ -5,62 +5,79 @@ using Pokedex.Application.Contracts.v1.Responses;
 using Pokedex.Application.Interfaces;
 using Pokedex.Application.Models;
 using Pokedex.Application.Notificacoes;
+using Pokedex.Domain.Services;
 
 namespace Pokedex.Application.Services;
 
-public class PokemonService : IPokemonService
+public class PokemonService : BaseService, IPokemonService
 {
     private readonly IPokemonApi _pokemonApi;
     private readonly IMapper _mapper;
-    private readonly INotificador _notificador;    
+    
 
-    public PokemonService(IPokemonApi pokemonApi, IMapper mapper, INotificador notificador)
+    public PokemonService(IPokemonApi pokemonApi, IMapper mapper, INotificador notificador) : base (notificador)
     {
         //_pokemonApi = RestService.For<IPokemonApi>(Configurations.Config.BASE_ADRESS_EXTERNAL_API);
         _pokemonApi = pokemonApi;
-        _mapper = mapper;
-        _notificador = notificador;        
+        _mapper = mapper;              
     }
 
     public async Task<PokemonDetailModel> ObterPokemonPorId(long id)
     {
-        var pokemonDetail = new PokemonDetailModel();        
-
-        var response = await _pokemonApi.ObterPokemonPorId(id);
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            _notificador.Notificar(new Notificacao("Falha na comunicação com a Api Principal"));            
+            var pokemonDetail = new PokemonDetailModel();
+
+            var response = await _pokemonApi.ObterPokemonPorId(id);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                base.Notificar("Falha na comunicação com a Api Principal");
+                return pokemonDetail;
+            }
+
+            pokemonDetail = _mapper.Map<PokemonDetailModel>(response.Content);
+
+            pokemonDetail.NiveisDePoder = new Dictionary<string, long>();
+
+            if (response.Content.Stats.Count >= 1)
+            {
+                pokemonDetail.NiveisDePoder = RecuperarNiveisDePoderPorStats(response.Content.Stats);
+            }
+
             return pokemonDetail;
         }
-
-        pokemonDetail = _mapper.Map<PokemonDetailModel>(response.Content);
-
-        pokemonDetail.NiveisDePoder = new Dictionary<string, long>();
-
-        if (response.Content.Stats.Count >= 1)
+        catch (Exception ex)
         {
-            pokemonDetail.NiveisDePoder = RecuperarNiveisDePoderPorStats(response.Content.Stats);
+            base.Notificar("Ocorreu uma execessão na tentativa de comunicação com a Api Principal");
+            throw new Exception("Ocorreu uma execessão na tentativa de comunicação com a Api Principal", ex);
         }
-
-        return pokemonDetail;
 
     }
 
     public async Task<PokemonListModel> ObterTodosPokemons()
     {
-        var pokemonList = new PokemonListModel();        
-
-        var response = await _pokemonApi.ObterTodosPokemons();
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            _notificador.Notificar(new Notificacao("Falha na comunicação com a Api Principal"));
+            var pokemonList = new PokemonListModel();
+
+            var response = await _pokemonApi.ObterTodosPokemons();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                base.Notificar("Falha na comunicação com a Api Principal");
+                return pokemonList;
+            }
+
+            pokemonList = _mapper.Map<PokemonListModel>(response.Content);
             return pokemonList;
         }
-
-        pokemonList = _mapper.Map<PokemonListModel>(response.Content);
-        return pokemonList;
+        catch (Exception ex)
+        {
+            base.Notificar("Ocorreu uma execessão na tentativa de comunicação com a Api Principal");
+            throw new Exception("Ocorreu uma execessão na tentativa de comunicação com a Api Principal", ex);
+        }
+       
 
     }
 
