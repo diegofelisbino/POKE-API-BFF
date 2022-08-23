@@ -7,6 +7,7 @@ Tecnologias utilizadas no projeto:
 - Refit
 - Log
   - Serilog
+  - Health Checks
   - ElmahIO
   - Sentry
 - Versionamento
