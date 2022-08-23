@@ -3,9 +3,15 @@ using Pokedex.Api.Configurations;
 using Pokedex.Api.Extensions;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
-LoggerConfig.AddLoggingConfiguration (builder.Services, builder.Host, builder.Configuration);
+
+LoggerConfig.AddLoggingConfig (builder.Host, builder.Environment);
+
+ElmahIoConfig.AddElmahIoConfig(builder.Services);
+
+SentryConfig.AddSentryConfig(builder.WebHost);
 
 ApiConfig.AddApiConfig(builder.Services);
 
@@ -15,11 +21,14 @@ DependecyInjectionConfig.ResolveDependencies(builder.Services);
 
 
 
+
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
 
-LoggerConfig.UseLoggingConfiguration(app);
+ElmahIoConfig.UseElmahIoConfig(app);
+
+SentryConfig.UseSentryConfig(app);
 
 var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 

@@ -1,5 +1,5 @@
 ﻿using Elmah.Io.AspNetCore;
-using Serilog.Context;
+using Sentry;
 using System.Net;
 
 namespace Pokedex.Api.Extensions
@@ -27,7 +27,8 @@ namespace Pokedex.Api.Extensions
 
         private static void HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            exception.Ship(context);
+            exception.Ship(context);            
+            SentrySdk.CaptureException(exception);
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
         }
     }

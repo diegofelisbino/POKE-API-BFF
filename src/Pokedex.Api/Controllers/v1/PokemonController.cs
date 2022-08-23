@@ -19,9 +19,9 @@ namespace Pokedex.Api.Controllers.v1
         private readonly IMapper _mapper;
         private readonly ILogger _logger;
 
-        public PokemonController(   IPokemonService service, 
-                                    IMapper mapper, 
-                                    INotificador notificador, 
+        public PokemonController(IPokemonService service,
+                                    IMapper mapper,
+                                    INotificador notificador,
                                     ILogger<PokemonController> logger) : base(notificador)
         {
             _service = service;
@@ -33,52 +33,35 @@ namespace Pokedex.Api.Controllers.v1
         [HttpGet("{id:long}")]
         public async Task<ActionResult<PokemonDetailViewModel>> ObterPokemonPorId(long id)
         {
-            try
-            {
-                _logger.LogInformation("Buscando Pokemon atavés do id {id}", id);
+            _logger.LogInformation("Buscando Pokemon atavés do id {id}", id);
 
-                var response = await _service.ObterPokemonPorId(id);
+            var response = await _service.ObterPokemonPorId(id);
 
-                var pokemonViewModel = _mapper.Map<PokemonDetailViewModel>(response);
-                
-                return CustomResponse(pokemonViewModel);
-            }
-            catch (Exception ex)
-            {   
-                _logger.LogCritical(ex, "enpoint GET {endpoint} -> ObterPokemonPorId({id}) - Exception", Request.Path.Value, id );
-                return CustomResponse();
-                
-            }
-            
+            var pokemonViewModel = _mapper.Map<PokemonDetailViewModel>(response);
+
+            return CustomResponse(pokemonViewModel);
+
         }
 
         [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<PokemonListViewModel>> ObterTodosPokemons()
         {
-            try
+            _logger.LogInformation("Buscando lista com todos Pokemons");
+
+            var responseApi = await _service.ObterTodosPokemons();
+
+            var pokemons = _mapper.Map<PokemonListViewModel>(responseApi);
+
+            string url = $"{Request.Scheme}://{Request.Host.Value}{Request.Path.Value}";
+
+            foreach (var pokemon in pokemons.Pokemons)
             {
-                _logger.LogInformation("Buscando lista com todos Pokemons");
-
-                var responseApi = await _service.ObterTodosPokemons();
-
-                var pokemons = _mapper.Map<PokemonListViewModel>(responseApi);
-
-                string url = $"{Request.Scheme}://{Request.Host.Value}{Request.Path.Value}";
-
-                foreach (var pokemon in pokemons.Pokemons)
-                {
-                    pokemon.Url = new Uri($"{url}{pokemon.Id}");
-                }
-
-                return CustomResponse(pokemons);
+                pokemon.Url = new Uri($"{url}{pokemon.Id}");
             }
-            catch (Exception ex)
-            {
-                _logger.LogCritical(ex, "enpoint GET {endpoint} -> ObterTodosPokemons() - Exception", Request.Path.Value);
-                return CustomResponse();
 
-            }
+            return CustomResponse(pokemons);
+
 
         }
 

@@ -10,10 +10,7 @@ namespace Pokedex.Api.ViewModels
         public Uri Url { get; set; }
 
     }
+
 }
-
-
-
-
 
 
