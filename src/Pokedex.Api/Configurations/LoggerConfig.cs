@@ -31,7 +31,7 @@ namespace Pokedex.Api.Configurations
             {
                 o.ApiKey = "a655fb4a6e2c4547980e8c376af30ea4";
                 o.LogId = new Guid("e624981c-efd5-43d0-a807-db8e21732c6b");
-            });
+            }); 
 
             return services;
 
@@ -46,21 +46,4 @@ namespace Pokedex.Api.Configurations
 
     }
 
-    public static class SentryConfig
-    {
-        public static void AddSentryConfig(IWebHostBuilder webHost)
-        {
-
-            webHost.UseSentry();
-
-        }
-
-        public static IApplicationBuilder UseSentryConfig(this IApplicationBuilder app)
-        {
-            app.UseSentryTracing();
-
-            return app;
-        }
-
-    }
 }
