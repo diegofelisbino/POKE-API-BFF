@@ -5,6 +5,11 @@ Tecnologias utilizadas no projeto:
 
 - AutoMapper
 - Refit
+- Log
+  - Serilog
+  - ElmahIO
+- Versionamento
+  - Swagger
 
 Tests:
   - xUnit
