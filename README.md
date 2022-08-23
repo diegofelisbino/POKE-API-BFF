@@ -8,6 +8,7 @@ Tecnologias utilizadas no projeto:
 - Log
   - Serilog
   - ElmahIO
+  - Sentry
 - Versionamento
   - Swagger
 
