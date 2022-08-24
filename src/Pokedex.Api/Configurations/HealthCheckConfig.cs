@@ -9,7 +9,7 @@ namespace Pokedex.Api.Configurations
         {
             services.AddHealthChecks()
                 .AddUrlGroup(new Uri("https://pokeapi.co"), name: "pokeapi-base")
-                .AddUrlGroup(new Uri("https://pokeapi.co/api/v1/pokemon/1"), name: "pokeapi-id")
+                .AddUrlGroup(new Uri("https://pokeapi.co/api/v2/pokemon/1"), name: "pokeapi-id")
                 .AddUrlGroup(new Uri("https://pokeapi.co/api/v2/pokemon/?offset=0&limit=1"), name: "pokeapi-paginado");
 
             services.AddHealthChecksUI()
@@ -35,7 +35,7 @@ namespace Pokedex.Api.Configurations
 
                 options.UseRelativeApiPath = false;
                 options.UseRelativeResourcesPath = false;
-                options.UseRelativeWebhookPath = false;
+                options.UseRelativeWebhookPath = false;                
             });
 
             return app;

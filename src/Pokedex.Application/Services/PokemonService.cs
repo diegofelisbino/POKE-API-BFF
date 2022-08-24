@@ -24,6 +24,7 @@ public class PokemonService : BaseService, IPokemonService
 
     public async Task<PokemonDetailModel> ObterPokemonPorId(long id)
     {
+       
         var pokemonDetail = new PokemonDetailModel();
 
         var response = await _pokemonApi.ObterPokemonPorId(id);

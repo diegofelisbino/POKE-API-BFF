@@ -10,7 +10,7 @@ using Pokedex.Application.Models;
 namespace Pokedex.Api.Controllers.v1
 {
 
-    [Authorize]
+    [Authorize]    
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/pokemon")]
     public class PokemonController : MainController
@@ -29,7 +29,7 @@ namespace Pokedex.Api.Controllers.v1
             _logger = logger;
         }
 
-        [AllowAnonymous]
+        [AllowAnonymous]        
         [HttpGet("{id:long}")]
         public async Task<ActionResult<PokemonDetailViewModel>> ObterPokemonPorId(long id)
         {
