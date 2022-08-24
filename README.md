@@ -1,8 +1,14 @@
 # POKE-API-BFF [Em desenvolvimento]
-Uma API desenvolvida em .NET para servir como um BFF para dois clientes distintos, com necessidades especificas.
 
-Tecnologias utilizadas no projeto:
+Está é uma API desenvolvida em .NET 6, que serve como um BFF  para atender um client com necessidades especificas.
+A API que utilizo como base para os requests do BFF é a https://pokeapi.co.
 
+Algumas das abordagens e tecnologias,  utilizadas no projeto:
+ 
+ - CustomResponse
+ - Exception Middleware
+ - ApiVersion
+    - Swagger
 - AutoMapper
 - Refit
 - Log
