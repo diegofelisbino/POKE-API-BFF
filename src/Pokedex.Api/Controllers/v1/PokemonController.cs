@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
-using Elmah.Io.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Pokedex.Api.Configurations;
+using Pokedex.Api.Extensions;
 using Pokedex.Api.ViewModels;
 using Pokedex.Application.Interfaces;
-using Pokedex.Application.Models;
 
 namespace Pokedex.Api.Controllers.v1
 {
@@ -29,7 +27,7 @@ namespace Pokedex.Api.Controllers.v1
             _logger = logger;
         }
 
-        [AllowAnonymous]        
+        [ClaimsAuthorize("Pokemon", "Listar")]     
         [HttpGet("{id:long}")]
         public async Task<ActionResult<PokemonDetailViewModel>> ObterPokemonPorId(long id)
         {
@@ -43,7 +41,7 @@ namespace Pokedex.Api.Controllers.v1
 
         }
 
-        [AllowAnonymous]
+        
         [HttpGet]
         public async Task<ActionResult<PokemonListViewModel>> ObterTodosPokemons()
         {

@@ -16,6 +16,8 @@ SentryConfig.AddSentryConfig(builder.WebHost);
 
 HealthCheckConfig.AddHealthConfig(builder.Services);
 
+IdentityConfig.AddIdentityConfig(builder.Services, builder.Configuration);
+
 ApiConfig.AddApiConfig(builder.Services);
 
 SwaggerConfig.AddSwaggerConfig(builder.Services);
@@ -25,6 +27,8 @@ DependecyInjectionConfig.ResolveDependencies(builder.Services);
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
+
+app.UseAuthentication();
 
 var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
