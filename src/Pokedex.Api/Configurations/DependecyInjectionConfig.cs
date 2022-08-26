@@ -3,11 +3,13 @@
 
 using Microsoft.Extensions.Options;
 using Pokedex.Api.AutoMapper;
+using Pokedex.Api.Extensions;
 using Pokedex.Application.AutoMapper;
 using Pokedex.Application.Contracts;
 using Pokedex.Application.Interfaces;
 using Pokedex.Application.Notificacoes;
 using Pokedex.Application.Services;
+using Pokedex.Domain.Interfaces;
 using Refit;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -33,6 +35,10 @@ namespace Pokedex.Api.Configurations
             services.AddScoped<INotificador, Notificador>();
 
             services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddScoped<IAspNetData, AspNetData>();
+
 
             return services;
         }

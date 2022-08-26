@@ -1,5 +1,6 @@
 ﻿
 using Pokedex.Application.Configurations;
+using Pokedex.Domain.Interfaces;
 
 namespace Pokedex.Application.Models
 {
@@ -19,6 +20,8 @@ namespace Pokedex.Application.Models
             }
         }       
         public Uri Url { get; set; }
+
+        
 
     }
 }

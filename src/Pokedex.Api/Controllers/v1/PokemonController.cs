@@ -41,7 +41,7 @@ namespace Pokedex.Api.Controllers.v1
 
         }
 
-        
+        [ClaimsAuthorize("Pokemon", "Listar")]
         [HttpGet]
         public async Task<ActionResult<PokemonListViewModel>> ObterTodosPokemons()
         {
@@ -51,16 +51,7 @@ namespace Pokedex.Api.Controllers.v1
 
             var pokemons = _mapper.Map<PokemonListViewModel>(responseApi);
 
-            string url = $"{Request.Scheme}://{Request.Host.Value}{Request.Path.Value}";
-
-            foreach (var pokemon in pokemons.Pokemons)
-            {
-                pokemon.Url = new Uri($"{url}{pokemon.Id}");
-            }
-
             return CustomResponse(pokemons);
-
-
         }
 
 

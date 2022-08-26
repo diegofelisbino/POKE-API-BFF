@@ -5,7 +5,9 @@ using Pokedex.Application.Contracts.v1.Responses;
 using Pokedex.Application.Interfaces;
 using Pokedex.Application.Models;
 using Pokedex.Application.Notificacoes;
+using Pokedex.Domain.Interfaces;
 using Pokedex.Domain.Services;
+using System;
 
 namespace Pokedex.Application.Services;
 
@@ -13,13 +15,13 @@ public class PokemonService : BaseService, IPokemonService
 {
     private readonly IPokemonApi _pokemonApi;
     private readonly IMapper _mapper;
-
-
-    public PokemonService(IPokemonApi pokemonApi, IMapper mapper, INotificador notificador) : base(notificador)
+    private readonly IAspNetData _aspNetData;
+    public PokemonService(IPokemonApi pokemonApi, IMapper mapper, INotificador notificador, IAspNetData aspNetData) : base(notificador)
     {
         //_pokemonApi = RestService.For<IPokemonApi>(Configurations.Config.BASE_ADRESS_EXTERNAL_API);
         _pokemonApi = pokemonApi;
         _mapper = mapper;
+        _aspNetData = aspNetData;
     }
 
     public async Task<PokemonDetailModel> ObterPokemonPorId(long id)
@@ -61,9 +63,10 @@ public class PokemonService : BaseService, IPokemonService
         }
 
         pokemonList = _mapper.Map<PokemonListModel>(response.Content);
+
+        pokemonList.Pokemons = ObterPokemons(pokemonList);
+
         return pokemonList;
-
-
 
     }
 
@@ -100,6 +103,22 @@ public class PokemonService : BaseService, IPokemonService
 
         }
         return niveisDePoder;
+    }
+    private List<PokemonBaseModel> ObterPokemons(PokemonListModel pokemonList)
+    {
+        List<PokemonBaseModel> lista = new();
+
+        foreach (var result in pokemonList.Results)
+        {
+            PokemonBaseModel pokemonBase = new PokemonBaseModel();
+            pokemonBase.Id = long.Parse(result.Url.Segments[4].ToString().Replace("/", ""));
+            pokemonBase.Nome = result.Name;
+            pokemonBase.Url = new Uri($"{_aspNetData.AddressObterPokemonPorId}{pokemonBase.Id}");
+
+            lista.Add(pokemonBase);
+        }
+
+        return lista;
     }
 
 }
