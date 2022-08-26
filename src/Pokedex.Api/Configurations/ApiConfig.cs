@@ -1,7 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.Extensions.Configuration;
-using System.Configuration;
 
 namespace Pokedex.Api.Configurations
 {
@@ -28,8 +25,13 @@ namespace Pokedex.Api.Configurations
             return services;
 
         }
-        public static IApplicationBuilder UseApiConfig(this IApplicationBuilder app, IConfiguration configuration)
-        {            
+        public static IApplicationBuilder UseApiConfig(this IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (!env.IsDevelopment())
+            {                  
+                app.UseHsts();
+            }
+
             app.UseHttpsRedirection();
 
             app.UseAuthorization();

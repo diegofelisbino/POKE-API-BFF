@@ -38,7 +38,7 @@ SentryConfig.UseSentryConfig(app);
 
 SwaggerConfig.UseSwaggerConfig(app, apiVersionDescriptionProvider);
 
-ApiConfig.UseApiConfig(app, app.Configuration);
+ApiConfig.UseApiConfig(app, app.Environment);
 
 HealthCheckConfig.UseHealthConfig(app);
 
