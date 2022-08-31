@@ -8,315 +8,165 @@ using Pokedex.Application.Interfaces;
 using Pokedex.Application.Models;
 using Pokedex.Application.Notificacoes;
 using Pokedex.Application.Services;
+using Pokedex.Domain.Interfaces;
+using Pokedex.Domain.Services;
 using Pokedex.Test.Mocks;
 using Refit;
 using System.Net;
 
 namespace Pokedex.Test.UnitTests.PokemonServiceTest;
 
-public class PokemonServiceTest
+[CollectionDefinition(nameof(PokemonCollection))]
+public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
 {
-    private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<IPokemonApi> _pokemonApi;
+    private readonly Mock<IMapper> _mapper;
+    private readonly Mock<IAspNetData> _aspNetData;
     private readonly Mock<INotificador> _notificador;
+
     private PokemonService _pokemonService;
+    private readonly PokemonTestsFixture _pokemonTestsFixture;
 
-    const string MSG_FALHA_COMUNICACAO = "Falhaa na comunicação com a Api Principal";
-
-    public PokemonServiceTest()
+    public PokemonServiceTest(PokemonTestsFixture pokemonTestsFixture)
     {
-        _mockMapper = new Mock<IMapper>();
+        _mapper = new Mock<IMapper>();
         _pokemonApi = new Mock<IPokemonApi>();
         _notificador = new Mock<INotificador>();
+        _aspNetData = new Mock<IAspNetData>();
+    
+        _pokemonService = new PokemonService(_pokemonApi.Object,
+                                             _mapper.Object,
+                                             _notificador.Object,
+                                             _aspNetData.Object);
 
-        _pokemonService = new PokemonService(_pokemonApi.Object, _mockMapper.Object, _notificador.Object);
+        _pokemonTestsFixture = pokemonTestsFixture;
     }
 
-    [Fact]
-    public async Task ObterPokemonPorId_Quando_Response_Sucesso()
+    [Fact(DisplayName = "Retornar PokemonDetailModel")]
+    [Trait("Categoria", "ObterPokemonPorId")]
+    public async Task ObterPokemonPorId_HttpStatusCodeOK_DeveRetornarPokemonDetailModel()
     {
         //Arrange
-        var pokemonMock = PokemonResponseMock.ObterPikachuResponseMock();
+        var response = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.OK), _pokemonTestsFixture.GerarPokemonResponseValido(), null);
 
-        var resultadoEsperado = PokemonDetailModelMock.ObterPikachuModelMock();
-
-        var response = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.OK), pokemonMock, null);
+        var pokemonDetailModel = _pokemonTestsFixture.GerarPokemonModelValido();
 
         _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(response);
-        _mockMapper.Setup(x => x.Map<PokemonDetailModel>(response.Content)).Returns(resultadoEsperado);
+        _mapper.Setup(x => x.Map<PokemonDetailModel>(response.Content)).Returns(pokemonDetailModel);
 
         if (!response.IsSuccessStatusCode)
-        {
-            _notificador.Setup(x => x.Notificar(It.IsAny<Notificacao>()));
-            resultadoEsperado = new PokemonDetailModel();
+        {   
+            _notificador.Setup(x => x.Notificar(It.IsAny<Notificacao>()));            
+            
+            pokemonDetailModel = new PokemonDetailModel();
         }
 
         //Act            
-        var resultadoObtido = await _pokemonService.ObterPokemonPorId(25);
+        var resultadoObtido = await _pokemonService.ObterPokemonPorId(1);
 
         //Assert
         resultadoObtido.Should().NotBeNull();
-        resultadoObtido.Should().BeEquivalentTo(resultadoEsperado);
+        resultadoObtido.Should().BeEquivalentTo(pokemonDetailModel);
     }
 
-
-    [Fact]
-    public async Task ObterPokemonPorId_Quando_Response_Not_Success()
+    [Fact(DisplayName = "Retornar Null quando IsNotSuccess")]
+    [Trait("Categoria", "ObterPokemonPorId")]
+    public async Task ObterPokemonPorId_ResponseNotSuccess_DeveRetornarNull()
     {
-        //Arrange        
-        
-        var responseMock = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.BadRequest), null, null);
+        //Arrange                
+        var response = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.BadRequest), null, null);
 
-        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(responseMock);
-
-
-        //Act                
-        var pokemonObtido = await _pokemonService.ObterPokemonPorId(25);
-
-        var notificador = new Notificador();
-        notificador.Notificar(new Notificacao(MSG_FALHA_COMUNICACAO));
-        bool temNotificacao = notificador.TemNotificacao();
-        var notificadoesObtidas = notificador.ObterNotificacoes().First();
-
-        //Assert
-        pokemonObtido.Should().BeEquivalentTo(new PokemonDetailModel());
-        temNotificacao.Should().BeTrue();        
-        notificadoesObtidas.Should().BeEquivalentTo(new Notificacao(MSG_FALHA_COMUNICACAO));
-        notificadoesObtidas.Mensagem.Should().Be(MSG_FALHA_COMUNICACAO);
-        notificadoesObtidas.Mensagem.Should().NotBeEmpty();
-        notificadoesObtidas.Mensagem.Should().NotBeNullOrWhiteSpace();
-        notificadoesObtidas.Mensagem.Should().NotBe("");
-    }
-
-    [Fact]
-    public async Task ObterPokemonPorId_Quando_Response_Not_Success_()
-    {
-        //Arrange        
-
-        var responseMock = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.BadRequest), null, null);
-
-        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(responseMock);
-
-
-        //Act                
-        var pokemonObtido = await _pokemonService.ObterPokemonPorId(25);
-
-        var notificador = new Notificador();
-        notificador.Notificar(new Notificacao(""));
-        bool temNotificacao = notificador.TemNotificacao();
-        var notificadoesObtidas = notificador.ObterNotificacoes().First();
-
-        //Assert
-        pokemonObtido.Should().BeEquivalentTo(new PokemonDetailModel());
-        temNotificacao.Should().BeTrue();        
-        notificadoesObtidas.Mensagem.Should().Be("");
-    }
-
-    [Fact]
-    public async Task ObterTodosPokemons_Quando_Response_Sucesso()
-    {
-        //Arrange
-        var pokeListMock = PokemonResponseMock.ObterTodosPokemonsResponse(10);
-
-        var pokeListModelMock = PokemonListModelMock.ConverterPokeListEmPokeListModel(pokeListMock);
-
-        var response = new ApiResponse<PokeList>(new HttpResponseMessage(HttpStatusCode.OK), pokeListMock, null);
-
-        _pokemonApi.Setup(x => x.ObterTodosPokemons().Result).Returns(response);
-        _mockMapper.Setup(x => x.Map<PokemonListModel>(response.Content)).Returns(pokeListModelMock);
+        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(response);
 
         if (!response.IsSuccessStatusCode)
         {
-            _notificador.Setup(x => x.Notificar(It.IsAny<Notificacao>()));
+            _notificador.Setup(x => x.Notificar(new Notificacao(It.IsAny<String>())));
         }
-
-        //Act
-        var resultadoObtido = await _pokemonService.ObterTodosPokemons();
-
-        //Assert
-        resultadoObtido.Should().NotBeNull();
-
-
-    }
-
-    [Fact]
-    public async Task ObterTodosPokemon_Quando_Response_Not_Success()
-    {
-        //Arrange                
-        var responseMock = new ApiResponse<PokeList>(new HttpResponseMessage(HttpStatusCode.BadRequest), null, null);
-
-        _pokemonApi.Setup(x => x.ObterTodosPokemons().Result).Returns(responseMock);
-
-        
 
         //Act                
-        var pokemonObtido = await _pokemonService.ObterTodosPokemons();
-
-        var notificador = new Notificador();
-        notificador.Notificar(new Notificacao(MSG_FALHA_COMUNICACAO));
-        bool temNotificacao = notificador.TemNotificacao();
-        var notificadoesObtidas = notificador.ObterNotificacoes().First();
+        var resultadoObtido = await _pokemonService.ObterPokemonPorId(1);
 
         //Assert
-        pokemonObtido.Should().BeEquivalentTo(new PokemonListModel());
-        temNotificacao.Should().BeTrue();
-        notificadoesObtidas.Should().BeEquivalentTo(new Notificacao(MSG_FALHA_COMUNICACAO));
-        notificadoesObtidas.Mensagem.Should().Be(MSG_FALHA_COMUNICACAO);
-        notificadoesObtidas.Mensagem.Should().NotBeEmpty();
-        notificadoesObtidas.Mensagem.Should().NotBeNullOrWhiteSpace();
-        notificadoesObtidas.Mensagem.Should().NotBe("");
+        resultadoObtido.Should().BeEquivalentTo(new PokemonDetailModel());
+
     }
 
-
-    [Fact]
-    public async Task ObterPokemonPorId_Quando_Stats_Nao_Retornar_Elementos_Entao_NiveisDePoder_Nao_Deve_Retornar_Elementos()
+    [Fact(DisplayName = "Retornar PokemonDetailModel sem NiveisDePoder")]
+    [Trait("Categoria", "ObterPokemonPorId")]
+    public async Task ObterPokemonPorId_StatsSemElementos_NiveisDePoderNaoDeveRetornarElementos()
     {
-        //Arrange
-        var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
-        pokemonResponseMock.Stats = new List<StatX>();
+        //Arrange        
+        var response = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.OK), _pokemonTestsFixture.GerarPokemonResponseSemStats(), null);
 
-        var response = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.OK), pokemonResponseMock, null, null);
-
-        var pokemonDetailMock = PokemonDetailModelMock.ObterPikachuModelMock();
-        pokemonDetailMock.NiveisDePoder = new Dictionary<string, long>();
+        var pokemonDetailModel = _pokemonTestsFixture.GerarPokemonModelValido();
+        pokemonDetailModel.NiveisDePoder = new Dictionary<string, long>();
 
         _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(response);
-        _mockMapper.Setup(x => x.Map<PokemonDetailModel>(response.Content)).Returns(pokemonDetailMock);
+        _mapper.Setup(x => x.Map<PokemonDetailModel>(response.Content)).Returns(pokemonDetailModel);
 
-        if (response.Content.Stats.Count >= 1)
+        if (response.Content.Stats.Any())
         {
-            pokemonDetailMock.NiveisDePoder = PokemonDetailModelMock.RecuperarNiveisDePoderPorStats(response.Content.Stats);
+            pokemonDetailModel.NiveisDePoder = _pokemonTestsFixture.GerarNiveisDePoderPorStats(response.Content.Stats);
         }
 
         //Act                       
-        var pokemonDetail = await _pokemonService.ObterPokemonPorId(25);
-
-        int resultadoObtido = pokemonDetail.NiveisDePoder.Count;
-        int resultadoEsperado = 0;
+        var resultadoObtido = await _pokemonService.ObterPokemonPorId(1);
 
         //Assert         
-        resultadoObtido.Should().Be(resultadoEsperado);
+        Assert.True(resultadoObtido.NiveisDePoder.Count == 0);
     }
 
-    [Fact]
-    public async Task ObterPokemonPorId_Quando_Stats_Retornar_Elementos_Entao_NiveisDePoder_Deve_Retornar_Elementos()
+    [Fact(DisplayName = "Retornar NiveisDePoder baseado na lista de Stats")]
+    [Trait("Categoria", "ObterPokemonPorId")]
+    public async Task ObterPokemonPorId_StatsRetornarElementos_NiveisDePoderDeveRetornarElementos()
     {
-        //Arrange
-        var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
-        var response = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.OK), pokemonResponseMock, null, null);
+        //Arrange        
+        var response = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.OK), _pokemonTestsFixture.GerarPokemonResponseValido(), null, null);
 
-        var pokemonDetailMock = PokemonDetailModelMock.ObterPikachuModelMock();
-        pokemonDetailMock.NiveisDePoder = new Dictionary<string, long>();
+        var pokemonDetailModelFaker = _pokemonTestsFixture.GerarPokemonModelValido();
+        pokemonDetailModelFaker.NiveisDePoder = new Dictionary<string, long>();
 
         _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(response);
-        _mockMapper.Setup(x => x.Map<PokemonDetailModel>(response.Content)).Returns(pokemonDetailMock);
+        _mapper.Setup(x => x.Map<PokemonDetailModel>(response.Content)).Returns(pokemonDetailModelFaker);
 
-        if (response.Content.Stats.Count >= 1)
+        if (response.Content.Stats.Any())
         {
-            pokemonDetailMock.NiveisDePoder = PokemonDetailModelMock.RecuperarNiveisDePoderPorStats(response.Content.Stats);
+            pokemonDetailModelFaker.NiveisDePoder = _pokemonTestsFixture.GerarNiveisDePoderPorStats(response.Content.Stats);
         }
 
         //Act                       
-        var pokemonDetail = await _pokemonService.ObterPokemonPorId(25);
-        int resultadoObtido = pokemonDetail.NiveisDePoder.Count;
-        int resultadoEsperado = 7;
+        var pokemonDetailModel = await _pokemonService.ObterPokemonPorId(1);
 
-        //Assert         
-        resultadoObtido.Should().Be(resultadoEsperado);
+        //Assert        
+        Assert.Equal(pokemonDetailModelFaker.NiveisDePoder.Count, pokemonDetailModel.NiveisDePoder.Count);
+
     }
 
-    [Fact]
-    public async Task ObterPokemonPorId_Quando_Stats_Retornar_1_Elemento_Entao_NiveisDePoder_Deve_Retornar_2_Elementos()
+    [Fact(DisplayName = "Não retonar MaxStats, quando Stats retornar somente 1 elemento")]
+    [Trait("Categoria", "RecuperarNiveisDePoderPorStats")]
+    public void RecuperarNiveisDePoderPorStats_ReceberUmElemento_NaoDeveRetornarMaxStat()
     {
         //Arrange
-        var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
-        var stat = pokemonResponseMock.Stats.Take(1).FirstOrDefault();
-        pokemonResponseMock.Stats.Clear();
-        pokemonResponseMock.Stats.Add(stat);
-
-        var response = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.OK), pokemonResponseMock, null, null);
-
-        var pokemonDetailMock = PokemonDetailModelMock.ObterPikachuModelMock();
-        pokemonDetailMock.NiveisDePoder = new Dictionary<string, long>();
-
-        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(response);
-        _mockMapper.Setup(x => x.Map<PokemonDetailModel>(response.Content)).Returns(pokemonDetailMock);
-
-        if (response.Content.Stats.Count >= 1)
-        {
-            pokemonDetailMock.NiveisDePoder = PokemonDetailModelMock.RecuperarNiveisDePoderPorStats(response.Content.Stats);
-        }
-
-        //Act                       
-        var pokemonDetail = await _pokemonService.ObterPokemonPorId(25);
-        int resultadoObtido = pokemonDetail.NiveisDePoder.Count;
-        int resultadoEsperado = 1;
-
-        //Assert         
-        resultadoObtido.Should().Be(resultadoEsperado);
-    }
-
-    [Fact]
-    public void ObterPokemonPorId_Quando_RecuperarNiveisDePoderPorStats_Nao_Retornar_Elementos_Entao_Deve_Retornar_Null()
-    {
-        //Arrange
-        var listaStatsVazia = new List<StatX>();
+        var content = _pokemonTestsFixture.GerarPokemonResponseComUmStats();
 
         //Act
-        var resultadoObtido = _pokemonService.RecuperarNiveisDePoderPorStats(listaStatsVazia);
-        var resultadoEsperado = new Dictionary<string, long>();
+        var niveisPoder = _pokemonService.RecuperarNiveisDePoderPorStats(content.Stats);
 
-        //Assert
-        Assert.Equal(resultadoEsperado, resultadoObtido);
+        //Assert        
+        Assert.True(!niveisPoder?.Keys.Contains("max-stat"));
     }
 
-    [Fact]
-    public void ObterPokemonPorId_Quando_RecuperarNiveisDePoderPorStats_Nao_Receber_Elementos_Entao_Resultado_Deve_Conter_MaxStat()
+    [Fact(DisplayName = "O MaxBaseStat deve ter o valor do maior Stats")]
+    [Trait("Categoria", "RecuperarNiveisDePoderPorStats")]
+    public void RecuperarNiveisDePoderPorStats_ValorDoMaxBaseStat_DeveTerMaiorValorStats()
     {
         //Arrange
-        var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
-        var listaStats = pokemonResponseMock.Stats;
+        var content = _pokemonTestsFixture.GerarPokemonResponseValido();
+
+        long resultadoEsperado = content.Stats.Select(s => s.BaseStat).Max();
 
         //Act
-        var niveisPoder = _pokemonService.RecuperarNiveisDePoderPorStats(listaStats);
-
-        bool resultadoObtido = niveisPoder.Keys.Contains("max-stat");
-        bool resultadoEsperado = true;
-
-
-        //Assert
-        Assert.Equal(resultadoEsperado, resultadoObtido);
-    }
-
-    [Fact]
-    public void ObterPokemonPorId_Quando_RecuperarNiveisDePoderPorStats_Receber_1_Elemento_Entao_Resultado_Nao_Deve_Retornar_MaxStat()
-    {
-        //Arrange
-        var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
-        var listaStats = pokemonResponseMock.Stats.Take(1).ToList();
-
-        //Act
-        var niveisPoder = _pokemonService.RecuperarNiveisDePoderPorStats(listaStats);
-
-        bool resultadoObtido = niveisPoder.Keys.Contains("max-stat");
-        bool resultadoEsperado = false;
-
-
-        //Assert
-        Assert.Equal(resultadoEsperado, resultadoObtido);
-    }
-
-    [Fact]
-    public void ObterPokemonPorId_Quando_Possuir_MaxBaseStat_Entao_Deve_Atribuir_Maior_Valor_Stats()
-    {
-        //Arrange
-        var pokemonResponseMock = PokemonResponseMock.ObterPikachuResponseMock();
-        var stats = pokemonResponseMock.Stats;
-
-        long resultadoEsperado = stats.Select(s => s.BaseStat).Max();
-
-        //Act
-        var niveisPoder = _pokemonService.RecuperarNiveisDePoderPorStats(stats);
+        var niveisPoder = _pokemonService.RecuperarNiveisDePoderPorStats(content.Stats);
 
         long resultadoObtido = niveisPoder.Where(x => x.Key == "max-stat").Select(x => x.Value).First();
 
@@ -324,57 +174,55 @@ public class PokemonServiceTest
         Assert.Equal(resultadoEsperado, resultadoObtido);
     }
 
-
-    [Fact]
-    public void ObterTodosPokemons_Quando_Results_Receber_1_Elemento_Entao_Pokemons_Deve_Implementar_1_Elemento()
+    [Fact(DisplayName = "Retornar PokemonListModel")]
+    [Trait("Categoria", "ObterTodosPokemons")]
+    public async Task ObterTodosPokemons_ResponseSucesso_DeveRetornarPokemonListModel()
     {
         //Arrange
-        var resultMock = new Results { Name = "bulbasaur", Url = new Uri("https://pokeapi.co/api/v2/pokemon/1/") };
-        var resultsMock = new List<Results>();
-        resultsMock.Add(resultMock);
+        var pokeList = _pokemonTestsFixture.GerarPokeListValido(10);
 
-        int valorEsperado = 0;
+        var pokeListModel = _pokemonTestsFixture.GerarPokemonListModel(pokeList);
 
-        if (resultsMock.Count >= 1)
+        var response = new ApiResponse<PokeList>(new HttpResponseMessage(HttpStatusCode.OK), pokeList, null);
+
+        _pokemonApi.Setup(x => x.ObterTodosPokemons().Result).Returns(response);
+        _mapper.Setup(x => x.Map<PokemonListModel>(response.Content)).Returns(pokeListModel);
+
+        if (!response.IsSuccessStatusCode)
         {
-            valorEsperado++;
+            _notificador.Setup(x => x.Notificar(new Notificacao(It.IsAny<String>())));
         }
 
         //Act
-        var pokemonListModel = new PokemonListModel();
-        pokemonListModel.Results = resultsMock;
-
-        int valorObtido = pokemonListModel.Pokemons.Count();
+        var resultadoObtido = await _pokemonService.ObterTodosPokemons();
 
         //Assert
-        valorEsperado.Should().Be(valorObtido);
-
+        resultadoObtido.Should().NotBeNull();
+        resultadoObtido.Should().BeEquivalentTo(pokeListModel);
     }
 
-    [Fact]
-    public void ObterTodosPokemons_Quando_Nao_Receber_Results_Entao_Pokemons_Nao_Deve_Implementar_List()
+    [Fact(DisplayName = "Retornar Null quando IsNotSuccess")]
+    [Trait("Categoria", "ObterTodosPokemons")]
+    public async Task ObterTodosPokemon_Quando_Response_Not_Success()
     {
-        //Arrange        
-        var resultsMock = new List<Results>();
+        //Arrange                
+        var response = new ApiResponse<PokeList>(new HttpResponseMessage(HttpStatusCode.BadRequest), null, null);
 
-        int valorEsperado = 0;
+        _pokemonApi.Setup(x => x.ObterTodosPokemons().Result).Returns(response);
 
-        if (resultsMock.Count >= 1)
+        if (!response.IsSuccessStatusCode)
         {
-            valorEsperado++;
+            _notificador.Setup(x => x.Notificar(new Notificacao(It.IsAny<String>())));
         }
 
-
-        //Act
-        var pokemonListModel = new PokemonListModel();
-        pokemonListModel.Results = resultsMock;
-
-        int valorObtido = pokemonListModel.Pokemons.Count();
-
+        //Act                
+        var pokemonObtido = await _pokemonService.ObterTodosPokemons();
 
         //Assert
-        valorEsperado.Should().Be(valorObtido);
+        pokemonObtido.Should().BeEquivalentTo(new PokemonListModel());
     }
+
+
 
 }
 

@@ -16,7 +16,10 @@ public class PokemonService : BaseService, IPokemonService
     private readonly IPokemonApi _pokemonApi;
     private readonly IMapper _mapper;
     private readonly IAspNetData _aspNetData;
-    public PokemonService(IPokemonApi pokemonApi, IMapper mapper, INotificador notificador, IAspNetData aspNetData) : base(notificador)
+    public PokemonService(IPokemonApi pokemonApi, 
+                          IMapper mapper, 
+                          INotificador notificador, 
+                          IAspNetData aspNetData) : base(notificador)
     {
         //_pokemonApi = RestService.For<IPokemonApi>(Configurations.Config.BASE_ADRESS_EXTERNAL_API);
         _pokemonApi = pokemonApi;
@@ -41,7 +44,7 @@ public class PokemonService : BaseService, IPokemonService
 
         pokemonDetail.NiveisDePoder = new Dictionary<string, long>();
 
-        if (response.Content.Stats.Count >= 1)
+        if (response.Content.Stats.Any())
         {
             pokemonDetail.NiveisDePoder = RecuperarNiveisDePoderPorStats(response.Content.Stats);
         }
@@ -88,7 +91,7 @@ public class PokemonService : BaseService, IPokemonService
     {
         var niveisDePoder = new Dictionary<string, long>();
 
-        if (stats.Count >= 1)
+        if (stats.Any())
         {
             foreach (var stat in stats)
             {

@@ -7,18 +7,21 @@ using FluentAssertions;
 
 namespace Pokedex.Test.IntegrationTests
 {
-    public class PokemonServiceTest
+    [CollectionDefinition(nameof(PokemonCollection))]
+    public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
     {
 
         private readonly IPokemonService _pokemonService;
         private readonly IMapper _mapper;
+        private readonly PokemonTestsFixture _pokemonTestsFixture;
 
-        public PokemonServiceTest()
+        public PokemonServiceTest(PokemonTestsFixture pokemonTestsFixture)
         {
             var services = DependecyInjectionConfig.ResolverDependencias();
 
             var provider = services.BuildServiceProvider();
             _pokemonService = provider.GetService<IPokemonService>();
+            _pokemonTestsFixture = pokemonTestsFixture;
         }        
 
         [Theory]
@@ -26,9 +29,9 @@ namespace Pokedex.Test.IntegrationTests
         public async Task Quando_ObterPokemonPorId_Receber_Id_25_RetornaPikachu(long idPokemon)
         {
             //Arrange
-            var response = PokemonResponseMock.ObterPikachuResponseMock();
-            var pokemonEsperado = PokemonDetailModelMock.ObterPikachuModelMock();
-            pokemonEsperado.NiveisDePoder = PokemonDetailModelMock.RecuperarNiveisDePoderPorStats(response.Stats);
+            var response = _pokemonTestsFixture.GerarPokemonResponseValido();
+            var pokemonEsperado = _pokemonTestsFixture.GerarPokemonModelValido();
+            pokemonEsperado.NiveisDePoder = _pokemonTestsFixture.GerarNiveisDePoderPorStats(response.Stats);
 
             //Act
             var pokemonObtido = await _pokemonService.ObterPokemonPorId(idPokemon);
@@ -44,9 +47,9 @@ namespace Pokedex.Test.IntegrationTests
             //Arrange
             int quantidade = 10;
 
-            var response = PokemonResponseMock.ObterTodosPokemonsResponse(quantidade);
+            var response = _pokemonTestsFixture.GerarPokeListValido(quantidade);
 
-            var model = PokemonListModelMock.ConverterPokeListEmPokeListModel(response);
+            var model = _pokemonTestsFixture.GerarPokemonListModel(response);
 
             int esperado = model.Pokemons.Count;
 
