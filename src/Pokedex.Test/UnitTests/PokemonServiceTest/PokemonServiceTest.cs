@@ -9,7 +9,6 @@ using Pokedex.Application.Models;
 using Pokedex.Application.Notificacoes;
 using Pokedex.Application.Services;
 using Pokedex.Domain.Interfaces;
-using Pokedex.Domain.Services;
 using Pokedex.Test.Mocks;
 using Refit;
 using System.Net;
@@ -19,27 +18,13 @@ namespace Pokedex.Test.UnitTests.PokemonServiceTest;
 [CollectionDefinition(nameof(PokemonCollection))]
 public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
 {
-    private readonly Mock<IPokemonApi> _pokemonApi;
-    private readonly Mock<IMapper> _mapper;
-    private readonly Mock<IAspNetData> _aspNetData;
-    private readonly Mock<INotificador> _notificador;
-
-    private PokemonService _pokemonService;
     private readonly PokemonTestsFixture _pokemonTestsFixture;
-
+    private readonly PokemonService _pokemonService;
     public PokemonServiceTest(PokemonTestsFixture pokemonTestsFixture)
     {
-        _mapper = new Mock<IMapper>();
-        _pokemonApi = new Mock<IPokemonApi>();
-        _notificador = new Mock<INotificador>();
-        _aspNetData = new Mock<IAspNetData>();
-    
-        _pokemonService = new PokemonService(_pokemonApi.Object,
-                                             _mapper.Object,
-                                             _notificador.Object,
-                                             _aspNetData.Object);
-
         _pokemonTestsFixture = pokemonTestsFixture;
+        _pokemonService = _pokemonTestsFixture.ObterPokemonService();
+
     }
 
     [Fact(DisplayName = "Retornar PokemonDetailModel")]
@@ -51,13 +36,24 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
 
         var pokemonDetailModel = _pokemonTestsFixture.GerarPokemonModelValido();
 
-        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(response);
-        _mapper.Setup(x => x.Map<PokemonDetailModel>(response.Content)).Returns(pokemonDetailModel);
+        _pokemonTestsFixture
+            .Mocker
+            .GetMock<IPokemonApi>()
+            .Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result)
+            .Returns(response);
+
+        _pokemonTestsFixture
+            .Mocker.GetMock<IMapper>()
+            .Setup(x => x.Map<PokemonDetailModel>(response.Content))
+            .Returns(pokemonDetailModel);
 
         if (!response.IsSuccessStatusCode)
-        {   
-            _notificador.Setup(x => x.Notificar(It.IsAny<Notificacao>()));            
-            
+        {
+            _pokemonTestsFixture
+                .Mocker
+                .GetMock<INotificador>()
+                .Setup(x => x.Notificar(It.IsAny<Notificacao>()));
+
             pokemonDetailModel = new PokemonDetailModel();
         }
 
@@ -67,6 +63,7 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
         //Assert
         resultadoObtido.Should().NotBeNull();
         resultadoObtido.Should().BeEquivalentTo(pokemonDetailModel);
+        _pokemonTestsFixture.Mocker.GetMock<INotificador>().Verify(n => n.Notificar(It.IsAny<Notificacao>()), Times.Never);
     }
 
     [Fact(DisplayName = "Retornar Null quando IsNotSuccess")]
@@ -76,11 +73,18 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
         //Arrange                
         var response = new ApiResponse<Pokemon>(new HttpResponseMessage(HttpStatusCode.BadRequest), null, null);
 
-        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(response);
+        _pokemonTestsFixture
+         .Mocker
+         .GetMock<IPokemonApi>()
+         .Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result)
+         .Returns(response);
 
         if (!response.IsSuccessStatusCode)
         {
-            _notificador.Setup(x => x.Notificar(new Notificacao(It.IsAny<String>())));
+            _pokemonTestsFixture
+               .Mocker
+               .GetMock<INotificador>()
+               .Setup(x => x.Notificar(It.IsAny<Notificacao>()));
         }
 
         //Act                
@@ -88,6 +92,7 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
 
         //Assert
         resultadoObtido.Should().BeEquivalentTo(new PokemonDetailModel());
+        _pokemonTestsFixture.Mocker.GetMock<INotificador>().Verify(n => n.Notificar(It.IsAny<Notificacao>()), Times.Once);
 
     }
 
@@ -101,8 +106,17 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
         var pokemonDetailModel = _pokemonTestsFixture.GerarPokemonModelValido();
         pokemonDetailModel.NiveisDePoder = new Dictionary<string, long>();
 
-        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(response);
-        _mapper.Setup(x => x.Map<PokemonDetailModel>(response.Content)).Returns(pokemonDetailModel);
+        _pokemonTestsFixture
+            .Mocker
+            .GetMock<IPokemonApi>()
+            .Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result)
+            .Returns(response);
+
+        _pokemonTestsFixture
+            .Mocker
+            .GetMock<IMapper>()
+            .Setup(x => x.Map<PokemonDetailModel>(response.Content))
+            .Returns(pokemonDetailModel);
 
         if (response.Content.Stats.Any())
         {
@@ -126,8 +140,17 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
         var pokemonDetailModelFaker = _pokemonTestsFixture.GerarPokemonModelValido();
         pokemonDetailModelFaker.NiveisDePoder = new Dictionary<string, long>();
 
-        _pokemonApi.Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result).Returns(response);
-        _mapper.Setup(x => x.Map<PokemonDetailModel>(response.Content)).Returns(pokemonDetailModelFaker);
+        _pokemonTestsFixture
+             .Mocker
+             .GetMock<IPokemonApi>()
+             .Setup(x => x.ObterPokemonPorId(It.IsAny<long>()).Result)
+             .Returns(response);
+
+        _pokemonTestsFixture
+            .Mocker
+            .GetMock<IMapper>()
+            .Setup(x => x.Map<PokemonDetailModel>(response.Content))
+            .Returns(pokemonDetailModelFaker);
 
         if (response.Content.Stats.Any())
         {
@@ -185,12 +208,29 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
 
         var response = new ApiResponse<PokeList>(new HttpResponseMessage(HttpStatusCode.OK), pokeList, null);
 
-        _pokemonApi.Setup(x => x.ObterTodosPokemons().Result).Returns(response);
-        _mapper.Setup(x => x.Map<PokemonListModel>(response.Content)).Returns(pokeListModel);
+        _pokemonTestsFixture
+            .Mocker
+            .GetMock<IPokemonApi>()
+            .Setup(x => x.ObterTodosPokemons().Result)
+            .Returns(response);
+
+        _pokemonTestsFixture
+            .Mocker
+            .GetMock<IMapper>()
+            .Setup(x => x.Map<PokemonListModel>(response.Content))
+            .Returns(pokeListModel);
+
+        _pokemonTestsFixture
+            .Mocker
+            .GetMock<IAspNetData>()
+            .Setup(x => x.AddressObterPokemonPorId).Returns("https://meusite.com.br/");
 
         if (!response.IsSuccessStatusCode)
         {
-            _notificador.Setup(x => x.Notificar(new Notificacao(It.IsAny<String>())));
+            _pokemonTestsFixture
+               .Mocker
+               .GetMock<INotificador>()
+               .Setup(x => x.Notificar(It.IsAny<Notificacao>()));
         }
 
         //Act
@@ -208,11 +248,17 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
         //Arrange                
         var response = new ApiResponse<PokeList>(new HttpResponseMessage(HttpStatusCode.BadRequest), null, null);
 
-        _pokemonApi.Setup(x => x.ObterTodosPokemons().Result).Returns(response);
+        _pokemonTestsFixture
+            .Mocker
+            .GetMock<IPokemonApi>()
+            .Setup(x => x.ObterTodosPokemons().Result).Returns(response);
 
         if (!response.IsSuccessStatusCode)
         {
-            _notificador.Setup(x => x.Notificar(new Notificacao(It.IsAny<String>())));
+            _pokemonTestsFixture
+              .Mocker
+              .GetMock<INotificador>()
+              .Setup(x => x.Notificar(It.IsAny<Notificacao>()));
         }
 
         //Act                
@@ -221,8 +267,6 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
         //Assert
         pokemonObtido.Should().BeEquivalentTo(new PokemonListModel());
     }
-
-
 
 }
 

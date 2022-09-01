@@ -1,6 +1,9 @@
 ﻿using Bogus;
+using Moq.AutoMock;
 using Pokedex.Application.Contracts.v1.Responses;
 using Pokedex.Application.Models;
+using Pokedex.Application.Services;
+using Pokedex.Domain.Services;
 
 namespace Pokedex.Test.Mocks;
 
@@ -8,6 +11,17 @@ namespace Pokedex.Test.Mocks;
 public class PokemonCollection : ICollectionFixture<PokemonTestsFixture> { }
 public class PokemonTestsFixture : IDisposable
 {
+    public PokemonService PokemonService;
+    public AutoMocker Mocker;    
+
+    public PokemonService ObterPokemonService()
+    {
+        Mocker = new AutoMocker();
+        PokemonService = Mocker.CreateInstance<PokemonService>();        
+
+        return PokemonService;
+    }
+
     public Pokemon GerarPokemonResponseValido()
     {
         var spritesFake = new Faker<Sprites>();
@@ -68,7 +82,6 @@ public class PokemonTestsFixture : IDisposable
             Elementos = response.Types.Select(x => x.Type.Name).ToList()
         };
     }
-    
     public PokeList GerarPokeListValido(int quantidadePokemons)
     {
         var pokeList = new PokeList
@@ -79,7 +92,6 @@ public class PokemonTestsFixture : IDisposable
 
         return pokeList;
     }
-
     public PokemonListModel GerarPokemonListModel(PokeList pokeList)
     {
         var pokemons = new List<PokemonBaseModel>();
@@ -100,7 +112,6 @@ public class PokemonTestsFixture : IDisposable
 
         return pokemonListModel;
     }
-
     private List<TypeElement> GetTypeElements()
     {
         var typeElement = new TypeElement();
@@ -110,7 +121,6 @@ public class PokemonTestsFixture : IDisposable
         types.Add(typeElement);
         return types;
     }
-
     private List<StatX> GetStats()
     {
 
@@ -175,7 +185,6 @@ public class PokemonTestsFixture : IDisposable
 
         return stats;
     }
-
     private List<Results> GerarResults(int quantidadePokemons)
     {
 
@@ -187,7 +196,6 @@ public class PokemonTestsFixture : IDisposable
 
         return results;
     }
-
     public Dictionary<string, long> GerarNiveisDePoderPorStats(List<StatX> stats)
     {
         var niveisDePoder = new Dictionary<string, long>();
@@ -205,7 +213,6 @@ public class PokemonTestsFixture : IDisposable
 
         return niveisDePoder;
     }
-
     public void Dispose()
     {
 
