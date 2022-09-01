@@ -63,7 +63,6 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
         //Assert
         resultadoObtido.Should().NotBeNull();
         resultadoObtido.Should().BeEquivalentTo(pokemonDetailModel);
-        _pokemonTestsFixture.Mocker.GetMock<INotificador>().Verify(n => n.Notificar(It.IsAny<Notificacao>()), Times.Never);
     }
 
     [Fact(DisplayName = "Retornar Null quando IsNotSuccess")]
@@ -126,8 +125,8 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
         //Act                       
         var resultadoObtido = await _pokemonService.ObterPokemonPorId(1);
 
-        //Assert         
-        Assert.True(resultadoObtido.NiveisDePoder.Count == 0);
+        //Assert                 
+        resultadoObtido.NiveisDePoder.Should().HaveCount(0);
     }
 
     [Fact(DisplayName = "Retornar NiveisDePoder baseado na lista de Stats")]
@@ -158,10 +157,10 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
         }
 
         //Act                       
-        var pokemonDetailModel = await _pokemonService.ObterPokemonPorId(1);
+        var resultado = await _pokemonService.ObterPokemonPorId(1);
 
-        //Assert        
-        Assert.Equal(pokemonDetailModelFaker.NiveisDePoder.Count, pokemonDetailModel.NiveisDePoder.Count);
+        //Assert                
+        resultado.NiveisDePoder.Count.Should().Be(pokemonDetailModelFaker.NiveisDePoder.Count);
 
     }
 
@@ -175,8 +174,9 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
         //Act
         var niveisPoder = _pokemonService.RecuperarNiveisDePoderPorStats(content.Stats);
 
-        //Assert        
-        Assert.True(!niveisPoder?.Keys.Contains("max-stat"));
+        //Assert     
+        niveisPoder?.Keys.Should().NotContain("max-stat");
+
     }
 
     [Fact(DisplayName = "O MaxBaseStat deve ter o valor do maior Stats")]
@@ -194,7 +194,7 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
         long resultadoObtido = niveisPoder.Where(x => x.Key == "max-stat").Select(x => x.Value).First();
 
         //Assert
-        Assert.Equal(resultadoEsperado, resultadoObtido);
+        resultadoObtido.Should().Be(resultadoEsperado);
     }
 
     [Fact(DisplayName = "Retornar PokemonListModel")]
@@ -266,6 +266,7 @@ public class PokemonServiceTest : IClassFixture<PokemonTestsFixture>
 
         //Assert
         pokemonObtido.Should().BeEquivalentTo(new PokemonListModel());
+      
     }
 
 }

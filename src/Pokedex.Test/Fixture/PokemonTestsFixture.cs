@@ -10,16 +10,15 @@ namespace Pokedex.Test.Mocks;
 [CollectionDefinition(nameof(PokemonCollection))]
 public class PokemonCollection : ICollectionFixture<PokemonTestsFixture> { }
 public class PokemonTestsFixture : IDisposable
-{
-    public PokemonService PokemonService;
-    public AutoMocker Mocker;    
+{    
+    public AutoMocker Mocker;   
 
     public PokemonService ObterPokemonService()
     {
         Mocker = new AutoMocker();
-        PokemonService = Mocker.CreateInstance<PokemonService>();        
+        var pokemonService = Mocker.CreateInstance<PokemonService>();        
 
-        return PokemonService;
+        return pokemonService;
     }
 
     public Pokemon GerarPokemonResponseValido()
