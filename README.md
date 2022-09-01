@@ -21,9 +21,10 @@ Algumas das abordagens e tecnologias,  utilizadas no projeto:
 
 Tests:
   - xUnit
-    - Testes Unitários 
-    - Testes de Integração
-    - Testes de Mutação
-      - Stryker.Net
+    - Testes Unitários
+      - Fluent Assertions
+      - Fixture
+      - Bogus
+    - Testes de Integração  
   
   
