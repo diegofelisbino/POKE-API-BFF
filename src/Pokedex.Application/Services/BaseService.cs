@@ -8,11 +8,11 @@ namespace Pokedex.Domain.Services
     {
         private readonly INotificador _notificador;
 
-        protected BaseService(INotificador notificador)
+        public BaseService(INotificador notificador)
         {
             _notificador = notificador;
         }
-        protected void Notificar(string mensagem)
+        public virtual void Notificar(string mensagem)
         {
             _notificador.Notificar(new Notificacao(mensagem));
         }

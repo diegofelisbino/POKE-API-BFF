@@ -27,7 +27,7 @@ namespace Pokedex.Api.Controllers.v1
             _logger = logger;
         }
 
-        [ClaimsAuthorize("Pokemon", "Listar")]     
+       /*[ [ClaimsAuthorize("Pokemon", "Listar")]     
         [HttpGet("{id:long}")]
         public async Task<ActionResult<PokemonDetailViewModel>> ObterPokemonPorId(long id)
         {
@@ -41,7 +41,7 @@ namespace Pokedex.Api.Controllers.v1
 
         }
 
-        [ClaimsAuthorize("Pokemon", "Listar")]
+        ClaimsAuthorize("Pokemon", "Listar")]
         [HttpGet]
         public async Task<ActionResult<PokemonListViewModel>> ObterTodosPokemons()
         {
@@ -52,43 +52,9 @@ namespace Pokedex.Api.Controllers.v1
             var pokemons = _mapper.Map<PokemonListViewModel>(responseApi);
 
             return CustomResponse(pokemons);
-        }
-
-
-        /*[HttpGet("paginado")]
-        public async Task<ActionResult<PokemonListPaginadoViewModel>> ObterPokemonsPaginado([FromQuery] int offset, int limit)
-        {
-            var pokemons = await _service.ObterPokemonsPaginado(offset, limit);
-
-            return Ok(pokemons);
-        }
-
-        [HttpGet("{nome}")]
-        public async Task<ActionResult<PokemonDetailViewModel>> ObterPokemonPorNome(string nome)
-        {
-            try
-            {
-                var pokemon = await _service.ObterPokemonPorNome(nome);
-
-                return Ok(pokemon);
-            }
-            catch (Refit.ApiException ae)
-            {
-                if (ae.StatusCode != HttpStatusCode.OK)
-                {
-                    if (ae.StatusCode == HttpStatusCode.NotFound)
-                    {
-                        return NotFound("Dados não encontrados!");
-                    }
-                }
-
-                return BadRequest();
-            }
-            catch (Exception e)
-            {
-                return BadRequest();
-            }
-
         }*/
+
+
+       
     }
 }

@@ -24,7 +24,7 @@ namespace Pokedex.Test.IntegrationTests
             _pokemonTestsFixture = pokemonTestsFixture;
         }        
 
-        [Theory]
+       /* [Theory]
         [InlineData(25)]
         public async Task Quando_ObterPokemonPorId_Receber_Id_25_RetornaPikachu(long idPokemon)
         {
@@ -60,7 +60,7 @@ namespace Pokedex.Test.IntegrationTests
 
             //Assert
             Assert.Equal(esperado, obtido);
-        }
+        }*/
 
     }
 

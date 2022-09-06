@@ -1,8 +1,13 @@
-﻿using Bogus;
+﻿using AutoMapper;
+using Bogus;
+using Moq;
 using Moq.AutoMock;
+using Pokedex.Application.Contracts;
 using Pokedex.Application.Contracts.v1.Responses;
+using Pokedex.Application.Interfaces;
 using Pokedex.Application.Models;
 using Pokedex.Application.Services;
+using Pokedex.Domain.Interfaces;
 using Pokedex.Domain.Services;
 
 namespace Pokedex.Test.Mocks;
@@ -10,16 +15,23 @@ namespace Pokedex.Test.Mocks;
 [CollectionDefinition(nameof(PokemonCollection))]
 public class PokemonCollection : ICollectionFixture<PokemonTestsFixture> { }
 public class PokemonTestsFixture : IDisposable
-{    
-    public AutoMocker Mocker;   
+{
 
+    public Mock<IPokemonApi> PokemonApi;
+    public Mock<IMapper> Mapper;
+    public Mock<INotificador> Notificador;
+    public Mock<IAspNetData> _AspNetData;    
     public PokemonService ObterPokemonService()
     {
-        Mocker = new AutoMocker();
-        var pokemonService = Mocker.CreateInstance<PokemonService>();        
+        PokemonApi = new Mock<IPokemonApi>();
+        Mapper = new Mock<IMapper>();
+        Notificador = new Mock<INotificador>();
+        _AspNetData = new Mock<IAspNetData>();
 
+        var pokemonService = new PokemonService(PokemonApi.Object, Mapper.Object, Notificador.Object, _AspNetData.Object);
         return pokemonService;
     }
+
 
     public Pokemon GerarPokemonResponseValido()
     {
@@ -90,27 +102,32 @@ public class PokemonTestsFixture : IDisposable
         };
 
         return pokeList;
-    }
+    }   
     public PokemonListModel GerarPokemonListModel(PokeList pokeList)
     {
-        var pokemons = new List<PokemonBaseModel>();
-        long id = 1;
-        foreach (var result in pokeList.Results)
-        {
-            PokemonBaseModel pokemonBase = new PokemonBaseModel();
-            pokemonBase.Id = id;
-            pokemonBase.Nome = result.Name;
-            pokemons.Add(pokemonBase);
-
-            id++;
-        }
 
         var pokemonListModel = new PokemonListModel();
         pokemonListModel.Results = pokeList.Results;
-        //pokemonListModel.Pokemons = pokemons;        
 
         return pokemonListModel;
     }
+    public List<PokemonBaseModel> GerarPokemonsBaseModelInvalido(PokemonListModel pokemonListModel)
+    {
+        List<PokemonBaseModel> lista = new();
+
+
+        foreach (var result in pokemonListModel.Results)
+        {
+            PokemonBaseModel pokemonBase = new PokemonBaseModel();
+            pokemonBase.Id = long.Parse(result.Url.Segments[4].ToString().Replace("/", "AlgumaCoisa"));
+            pokemonBase.Nome = result.Name;
+
+            lista.Add(pokemonBase);  
+        }
+
+        return lista;
+    }
+
     private List<TypeElement> GetTypeElements()
     {
         var typeElement = new TypeElement();

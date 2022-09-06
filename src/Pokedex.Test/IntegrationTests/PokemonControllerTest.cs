@@ -13,7 +13,7 @@ namespace Pokedex.Test.IntegrationTests
             _factory = factory;          
         }
 
-        [Theory]
+        /*[Theory]
         [InlineData(1)]
         public async Task Quando_Get_Com_Argumento_Valido_Deve_Retornar_200(long id)
         {
@@ -55,6 +55,6 @@ namespace Pokedex.Test.IntegrationTests
 
             //Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        }
+        }*/
     }
 }

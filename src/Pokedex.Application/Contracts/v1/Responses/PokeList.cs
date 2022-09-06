@@ -7,15 +7,6 @@
 
     public record PokeList
     {
-        [JsonPropertyName("count")]
-        public int Count { get; set; }
-
-        [JsonPropertyName("next")]
-        public Uri Next { get; set; }
-
-        [JsonPropertyName("previous")]
-        public Uri Previous { get; set; }
-
         [JsonPropertyName("results")]
         public List<Results> Results { get; set; }
     }
